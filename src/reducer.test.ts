@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Action, reducer, calculatePoints } from './App';
+import { Action, reducer, calculatePoints } from './reducer';
 
 // Define the initial state
 const emptyInitialState = {
