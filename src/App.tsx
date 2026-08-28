@@ -1,8 +1,10 @@
 import React, { useReducer, useEffect, useRef } from 'react';
 import './App.css';
 import Modal from './Modal';
+import InstallPrompt from './components/InstallPrompt';
 import { restoreState, reducer, State, LocalStorageKeys } from './reducer';
-  
+import './components/InstallPrompt.css';
+   
 const App: React.FC = () => {
   const initialState: State = restoreState();
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -53,6 +55,7 @@ const App: React.FC = () => {
 
   return (
     <div className="container">
+      <InstallPrompt />
       <h1>🧙‍♂️ Scoresceror 🧙‍♀️</h1>
       <p>Press the button to increase your score!</p>
       <p>✨ Score: {state.score.toLocaleString()} ✨</p>

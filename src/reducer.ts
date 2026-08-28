@@ -42,19 +42,20 @@ export const reducer = (state: State, action: Action): State => {
     switch (action.type) {
         case 'increment':
             return { ...state, score: state.score + 1 };
-        case 'updateTime':
-            const timeElapsedMs = action.payload.nowMs - (state.updateTimeMs || 0)
+        case 'updateTime': {
+            const timeElapsedMs = action.payload.nowMs - (state.updateTimeMs || 0);
             return {
                 ...state,
                 score: state.score + calculatePoints(timeElapsedMs),
                 updateTimeMs: action.payload.nowMs
             };
+        }
         case 'openModal':
             return {
                 ...state,
                 isModalOpen: true,
             };
-        case 'calculateIdlePoints':
+        case 'calculateIdlePoints': {
             if (!state.score) {
                 // first time ever load of game
                 return { ...state, score: 0, idlePoints: 0, idleTimeMs: 0, updateTimeMs: action.payload.nowMs };
@@ -69,6 +70,7 @@ export const reducer = (state: State, action: Action): State => {
                 idlePoints,
                 updateTimeMs: action.payload.nowMs
             };
+        }
         case 'awardIdlePoints':
             return {
                 ...state,

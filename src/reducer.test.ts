@@ -45,7 +45,7 @@ describe('reducer', () => {
     const lastUpdateTimeMs = Date.now() - 5000; // 5 seconds ago
     const initialState = { ...emptyInitialState, score: 1, updateTimeMs: lastUpdateTimeMs };
     const currentTime = Date.now();
-    let state = reducer(initialState, { type: 'calculateIdlePoints', payload: { nowMs: currentTime } });
+    const state = reducer(initialState, { type: 'calculateIdlePoints', payload: { nowMs: currentTime } });
     const expectedPoints = calculatePoints(currentTime - lastUpdateTimeMs);
     expect(state.idlePoints).toBe(expectedPoints);
     expect(state.idleTimeMs).toBe(currentTime - lastUpdateTimeMs);
@@ -64,7 +64,7 @@ describe('reducer', () => {
   });
 
   it('should return the initial state for unknown action types', () => {
-    const action: Action = { type: 'unknown' } as any;
+    const action = { type: 'unknown' } as unknown as Action;
     const newState = reducer(emptyInitialState, action);
     expect(newState).toBe(emptyInitialState);
   });
