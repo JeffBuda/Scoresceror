@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1a1a2e"/>
+  <rect x="64" y="64" width="384" height="384" rx="48" fill="#16213e"/>
+  <text x="256" y="370" font-size="256" font-family="Segoe UI Emoji, Apple Color Emoji, sans-serif" text-anchor="middle" dominant-baseline="middle" fill="#ffffff">🧙</text>
+</svg>
