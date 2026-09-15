@@ -5,34 +5,33 @@
 // every page load for iOS users who haven't launched the app from
 // their Home Screen yet (per the user's request to prompt on every
 // refresh).
-import React, { useState, useEffect } from 'react';
+import { createSignal, onSettled, Show } from 'solid-js';
 import { shouldShowIOSInstallPrompt } from '../utils/pwa';
 import './InstallPrompt.css';
 
-const InstallPrompt: React.FC = () => {
-  const [visible, setVisible] = useState(false);
+const InstallPrompt = () => {
+  const [visible, setVisible] = createSignal(false);
 
-  useEffect(() => {
+  onSettled(() => {
     setVisible(shouldShowIOSInstallPrompt());
-  }, []);
-
-  if (!visible) return null;
+  });
 
   return (
-    <div className="install-prompt">
-      <span>
-        📱 Tap the <strong>Share</strong> button below, then
-        <strong> Add to Home Screen</strong> to save your game
-        permanently!
-      </span>
-      <button
-        className="install-prompt__dismiss"
-        onClick={() => setVisible(false)}
-        aria-label="Dismiss install instructions"
-      >
-        ×
-      </button>
-    </div>
+    <Show when={visible()}>
+      <div class="install-prompt">
+        <span>
+          📱 Tap the <strong>Share</strong> button below, then
+          <strong> Add to Home Screen</strong> to save your game permanently!
+        </span>
+        <button
+          class="install-prompt__dismiss"
+          onClick={() => setVisible(false)}
+          aria-label="Dismiss install instructions"
+        >
+          ×
+        </button>
+      </div>
+    </Show>
   );
 };
 
