@@ -1,60 +1,24 @@
 /**
  * idbStorage.ts
  *
- * Lightweight, async key-value persistence built on the **native** IndexedDB
- * API.  A single object store ("timestamps") holds timestamp values keyed by
- * a string name.  When IndexedDB is unavailable (SSR, private-browsing mode,
- * or older browsers) the module transparently falls back to `localStorage`.
- *
- * Only the subset of IndexedDB needed for timestamp persistence is used —
- * no external dependencies required.
+ * Async key-value persistence for the "last active" timestamp. Uses the native
+ * IndexedDB substrate (`indexedDb.ts`) and transparently falls back to
+ * `localStorage` when IndexedDB is unavailable (SSR, private-browsing, etc.).
  */
 
-import { LocalStorageKeys } from '../reducer';
-
-const DB_NAME = 'scoresceror-db';
-const STORE_NAME = 'timestamps';
-const DB_VERSION = 1;
-
-// Key used for the "last active" timestamp inside either IndexedDB or
-// the localStorage fallback.
-const TIMESTAMP_KEY = 'lastActiveMs';
-const LS_FALLBACK_KEY = LocalStorageKeys.updateTimeMs;
-
-// ---------------------------------------------------------------------------
-// Internal: open (or create) the database
-// ---------------------------------------------------------------------------
-function openDatabase(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-  });
-}
-
-function isIndexedDBAvailable(): boolean {
-  return typeof indexedDB !== 'undefined';
-}
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+import {
+  LS_FALLBACK_KEY,
+  STORE_NAME,
+  TIMESTAMP_KEY,
+  isIndexedDBAvailable,
+  openDatabase,
+} from './indexedDb';
 
 /**
  * Retrieve the last-active timestamp (epoch milliseconds) from persistent
- * storage.  Returns `null` when no value has been stored yet.
+ * storage. Returns `null` when no value has been stored yet.
  */
 export async function getTimestamp(): Promise<number | null> {
-  // --- IndexedDB path -------------------------------------------------------
   if (isIndexedDBAvailable()) {
     let db: IDBDatabase | null = null;
     try {
@@ -76,17 +40,15 @@ export async function getTimestamp(): Promise<number | null> {
     }
   }
 
-  // --- localStorage fallback ------------------------------------------------
   const raw = localStorage.getItem(LS_FALLBACK_KEY);
   return raw ? Number(raw) : null;
 }
 
 /**
- * Persist the last-active timestamp (epoch milliseconds) to persistent
- * storage.  Falls back to `localStorage` when IndexedDB is unavailable.
+ * Persist the last-active timestamp (epoch milliseconds) to persistent storage.
+ * Falls back to `localStorage` when IndexedDB is unavailable.
  */
 export async function setTimestamp(nowMs: number): Promise<void> {
-  // --- IndexedDB path -------------------------------------------------------
   if (isIndexedDBAvailable()) {
     let db: IDBDatabase | null = null;
     try {
@@ -108,13 +70,10 @@ export async function setTimestamp(nowMs: number): Promise<void> {
     }
   }
 
-  // --- localStorage fallback ------------------------------------------------
   localStorage.setItem(LS_FALLBACK_KEY, nowMs.toString());
 }
 
-/**
- * Remove the stored timestamp from persistent storage.
- */
+/** Remove the stored timestamp from persistent storage. */
 export async function clearTimestamp(): Promise<void> {
   if (isIndexedDBAvailable()) {
     let db: IDBDatabase | null = null;
@@ -133,3 +92,4 @@ export async function clearTimestamp(): Promise<void> {
 
   localStorage.removeItem(LS_FALLBACK_KEY);
 }
+
