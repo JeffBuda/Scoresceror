@@ -34,6 +34,7 @@ export default tseslint.config(
       '**/*.md',
       '*.config.*',
       'scripts/**',
+      'src/arch/__fixtures__/**',
     ],
   },
 
