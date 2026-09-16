@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
+    "test:run": "vitest run",
     "test:watch": "vitest --watch"
   },
   "devDependencies": {

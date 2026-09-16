@@ -16,9 +16,12 @@ changes. A Cline-specific copy is mirrored in `.clinerules.md`.
 ## Tooling
 
 - Tests: `npm test` (Vitest) — `*.test.ts` lives next to its source.
-- Type-check: `npx tsc --noEmit`
+- Test (non-watch, used by CI): `npm run test:run`
+- Type-check: `npx tsc --noEmit` (= `npm run typecheck`)
 - Lint: `npm run lint` (ESLint) — the single gate for architecture.
 - Format: `npm run format` (Prettier).
+- CI: `.github/workflows/ci.yml` runs `lint`, `typecheck`, and `test:run`
+  on every push and pull request.
 
 ## File-size limits (ESLint `max-lines`; tests exempt)
 
