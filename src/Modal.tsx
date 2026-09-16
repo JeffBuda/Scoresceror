@@ -26,7 +26,7 @@ const Modal: Component<ModalProps> = (props) => {
           {elapsedTime().minutes > 0 && <p> {elapsedTime().minutes} minutes</p>}
           {elapsedTime().seconds > 0 && <p> {elapsedTime().seconds} seconds</p>}
           <p>Points earned: {props.points}</p>
-          <button onClick={props.onClose}>Close</button>
+          <button onClick={() => props.onClose()}>Close</button>
         </div>
       </div>
     </Show>

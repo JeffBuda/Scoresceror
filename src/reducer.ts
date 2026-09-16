@@ -1,44 +1,13 @@
-export enum LocalStorageKeys {
-  score = 'score',
-  updateTimeMs = 'updateTimeMs',
-}
+import { calculatePoints, type State, type Action } from './state';
 
-// Define the types for state and actions
-export interface State {
-  // persisted
-  score: number;
-  updateTimeMs: number;
+// Re-export the data model so existing import sites (useGameState,
+// usePersistedState, indexedDb, reducer.test) keep resolving `../reducer`.
+export { calculatePoints, type Action, type State, LocalStorageKeys, restoreState } from './state';
 
-  // transient
-  isModalOpen: boolean;
-  idleTimeMs: number;
-  idlePoints: number;
-}
-
-export type Action =
-  | { type: 'increment' }
-  | { type: 'openModal' }
-  | { type: 'closeModal' }
-  | { type: 'updateTime'; payload: { nowMs: number } }
-  | { type: 'calculateIdlePoints'; payload: { nowMs: number } }
-  | { type: 'awardIdlePoints'; payload: { nowMs: number } };
-
-export function restoreState(): State {
-  const updateTimeMs = Number(localStorage.getItem(LocalStorageKeys.updateTimeMs) || 0);
-  const score = Number(localStorage.getItem(LocalStorageKeys.score) || 0);
-  return {
-    score,
-    updateTimeMs,
-    isModalOpen: false,
-    idleTimeMs: 0,
-    idlePoints: 0,
-  };
-}
-
-export function calculatePoints(deltaTimeMs: number): number {
-  return Math.floor(deltaTimeMs / 1000);
-}
-
+/**
+ * reducer — pure state transitions for the Scoresceror game machine.
+ * Always returns a NEW state object; never mutates the previous one.
+ */
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case 'increment':
@@ -52,13 +21,9 @@ export const reducer = (state: State, action: Action): State => {
       };
     }
     case 'openModal':
-      return {
-        ...state,
-        isModalOpen: true,
-      };
+      return { ...state, isModalOpen: true };
     case 'calculateIdlePoints': {
       if (!state.score) {
-        // first time ever load of game
         return {
           ...state,
           score: 0,
@@ -67,16 +32,9 @@ export const reducer = (state: State, action: Action): State => {
           updateTimeMs: action.payload.nowMs,
         };
       }
-
-      //resume saved game
       const idleTimeMs = action.payload.nowMs - state.updateTimeMs;
       const idlePoints = calculatePoints(idleTimeMs);
-      return {
-        ...state,
-        idleTimeMs,
-        idlePoints,
-        updateTimeMs: action.payload.nowMs,
-      };
+      return { ...state, idleTimeMs, idlePoints, updateTimeMs: action.payload.nowMs };
     }
     case 'awardIdlePoints':
       return {
@@ -86,10 +44,7 @@ export const reducer = (state: State, action: Action): State => {
         updateTimeMs: action.payload.nowMs,
       };
     case 'closeModal':
-      return {
-        ...state,
-        isModalOpen: false,
-      };
+      return { ...state, isModalOpen: false };
     default:
       return state;
   }
