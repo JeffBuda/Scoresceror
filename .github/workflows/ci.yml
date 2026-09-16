@@ -1,20 +1,54 @@
 name: CI
 on:
   push:
-    branches: [main, "feature/**"]
+    branches: [main, 'feature/**']
   pull_request:
     branches: [main]
 jobs:
-  green:
-    name: Lint + Type-check + Tests
+  lint-typecheck:
+    name: Lint + Type-check
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: '22'
+          cache: 'npm'
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+  test:
+    name: Tests (Node ${{ matrix.node-version }})
+    needs: lint-typecheck
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
       - run: npm run test:run
+  deploy:
+    name: Deploy to GitHub Pages
+    needs:
+      - lint-typecheck
+      - test
+    runs-on: windows-latest
+    if: github.event_name == "push" && github.ref == "refs/heads/main"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
