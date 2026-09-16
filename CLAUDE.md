@@ -1,5 +1,48 @@
 # Project Rules for Agents (Claude / Cline)
 
+## ⚠️ CRITICAL: Anti-Paging / No Interactive Terminal Commands
+
+**The terminal MUST NEVER be left blocked waiting for user input.** This is a
+hard constraint — any command that opens an interactive pager, waits for stdin,
+or pauses the terminal will deadlock the agent context loop. The following
+patterns are **strictly forbidden** based on historical incidents in this repo:
+
+### Commands that caused terminal hangs (DO NOT USE)
+
+| #   | Forbidden pattern                                                | Why it hangs                                                 | Safe replacement                                                       |
+| --- | ---------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| 1   | `git log`                                                        | Opens interactive pager (`less`/`more`)                      | `git --no-pager log` or `GIT_PAGER=cat git log`                        |
+| 2   | `git show <sha>`                                                 | Opens interactive pager                                      | `git --no-pager show <sha>` or `GIT_PAGER=cat git show <sha>`          |
+| 3   | `git diff`                                                       | Opens interactive pager                                      | `git --no-pager diff` or `GIT_PAGER=cat git diff`                      |
+| 4   | `git log --oneline -3`                                           | Opens interactive pager                                      | `git --no-pager log --oneline -3`                                      |
+| 5   | `git show --stat HEAD`                                           | Opens interactive pager                                      | `git --no-pager show --stat HEAD`                                      |
+| 6   | `git log --oneline -5 --stat`                                    | Opens interactive pager                                      | `git --no-pager log --oneline -5 --stat`                               |
+| 7   | `git branch -a`                                                  | Opens interactive pager                                      | `git --no-pager branch -a`                                             |
+| 8   | `curl ... \| node -e "...readFileSync(0)..."`                    | Node reads from stdin; curl blocks on pipe; never terminates | Use `node -e` with `https.get()` instead of piping curl                |
+| 9   | `node -e "const fs = require('fs'); fs.readFileSync(0, 'utf8')"` | Reads from stdin — blocks forever in non-interactive context | Never read from stdin in `node -e`. Fetch data via HTTP APIs directly. |
+| 10  | `npx <tool>` without `--yes`                                     | Some npx tools open interactive prompts                      | Always use `npx --yes <tool>`                                          |
+
+### Defensive habits (ALWAYS follow)
+
+- **Prefix all git commands with `GIT_PAGER=cat`** or use `--no-pager`:
+  ```
+  GIT_PAGER=cat git log --oneline -5
+  git --no-pager show HEAD
+  ```
+- **Never pipe output through stdin** (`| node -e "..."` that reads `readFileSync(0)`):
+  fetch APIs data via `https.get()` / `https.request()` instead.
+- **Always use `--no-pager`** even with `git log --oneline` (the `--oneline`
+  flag does NOT disable the pager — it only changes the format).
+- **Set `CI=true` environment variable** for all commands to ensure tools
+  run non-interactively.
+- **If a command might produce long output**, redirect to a file first, then
+  read the file: `git --no-pager log > /tmp/log.txt 2>&1; cat /tmp/log.txt`
+
+### Memory aid
+
+> "If you didn't type `--no-pager`, you typed a pager that will hang."
+> "If you didn't write to a file, you wrote to a blocked pipe."
+
 Core rules for any coding agent working in this repository. Read before making
 changes. A Cline-specific copy is mirrored in `.clinerules.md`.
 
