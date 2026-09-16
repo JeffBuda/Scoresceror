@@ -85,24 +85,122 @@ changes. A Cline-specific copy is mirrored in `.clinerules.md`.
 - SOLID intent (JavaScript cannot fully express SOLID statically): prefer
   composition + small, single-purpose hooks; keep files minimal.
 
-## SolidJS 2.0 (v2 RC) — quick reference
+SolidJS 2.0 Migration Guide (from 1.x)
 
-> Installed: `solid-js@2.0.0-rc.7`. The public docs (`docs.solidjs.com`)
-> describe a _future_ split where `createStore` lives in `solid-js/store`.
-> **That subpath does not exist in this RC** — do not use it. Import
-> `createStore`, `createEffect`, `createMemo`, `onCleanup`, `onSettled`, and the
-> types `Store`/`Accessor` from `solid-js` (as the codebase does).
+> Targeted at the **installed beta**: `solid-js@2.0.0-rc.7`. Verify API surface
+> against `node_modules/@solidjs/signals/dist/types/` before adopting new
+> primitives. The docs site (`docs.solidjs.com`) describes a _planned_ 2.0 API
+> that does **not** fully match this RC. The type definitions in this project's
+> `node_modules` are the **authoritative** source.
 
-- **Signals:** `const [get, set] = createSignal(initial)`. Read `get()`; update
-  with `set(v)` or `set((p) => next)`. Mutating objects/arrays in place does
-  **not** notify — return new references.
-- **Stores:** `createStore(obj)` is fine-grained; mutate via the setter path.
-  `produce` and `unwrap` are **not** available in this RC.
-- **Effects:** the two-arg `createEffect(compute, effect)` is the 2.0 idiom;
-  lifecycle via `onSettled` / `onCleanup`.
-- **JSX:** use `class`, not `className`.
-- **Components are pure:** side effects live in hooks or event handlers, not in
-  the render body.
+### Critical: Import paths diverge from the docs
+
+The 2.0 docs say:
+
+```ts
+import { createStore } from 'solid-js/store'; // BREAKS — no such export
+```
+
+**The correct import for this RC is:**
+
+```ts
+import { createStore, reconcile } from 'solid-js'; // what this repo uses
+```
+
+`@solidjs/signals` is the backing implementation; `solid-js` re-exports the
+public API. There is **no `solid-js/store` subpath** in the `exports` map.
+
+### Lifecycle: onMount is gone
+
+| 1.x                               | 2.0 (this RC)                                                      |
+| --------------------------------- | ------------------------------------------------------------------ |
+| `onMount(fn)`                     | `onSettled(fn)`                                                    |
+| `onMount(fn); onCleanup(cleanup)` | `onSettled(() => { /* setup */ return () => { /* cleanup */ }; })` |
+
+**onSettled semantics:**
+
+- Runs during the settle flush — same write semantics as `createEffect`.
+- Returns a cleanup function that fires on **owner disposal** (component unmount).
+- Cannot be called inside `createEffect`'s apply phase; must be in an owned scope.
+- Reactive reads inside `onSettled` are **not** tracked — to react to subsequent
+  settles, register a _new_ `onSettled` each time.
+- `onCleanup` is **not allowed** inside `onSettled`'s callback — return a cleanup
+  function instead.
+
+**onCleanup is now for library/primitive internals only.** For component bodies,
+use `onSettled` with a returned cleanup. The JSDoc in `@solidjs/signals` states:
+_"In 2.0 user code this is rare."_
+
+### Signals vs Stores — updated primitives
+
+| 1.x                                   | 2.0 (this RC)                                 |
+| ------------------------------------- | --------------------------------------------- |
+| `createStore` (from `solid-js/store`) | `createStore` (from `solid-js`)               |
+| `produce` / `unwrap`                  | **Not yet exported**                          |
+| `reconcile()`                         | `reconcile()` (use for full-tree replacement) |
+
+**Store setter semantics (2.0):**
+
+- **Mutate in place (canonical):** `s.foo = 1`, `s.list.push(x)`, `s.list.splice(i, 1)`.
+- **Return a new value:** for shapes where mutation is awkward, e.g. `s => s.list.filter(...)`.
+  Arrays are replaced by index (length adjusted); objects are shallow-diffed at the top level.
+- The setter does **not** perform keyed reconciliation. Use `createStore(fn, seed, { key })`
+  or `createProjection(fn, seed, { key })` for keyed reconciliation identity.
+- `markRaw<T>(value: T): T` — marks a value as raw: no store wraps it.
+  Useful for class instances and external objects that should be tracked by reference.
+
+### Effects & memos
+
+| 1.x                               | 2.0                                           |
+| --------------------------------- | --------------------------------------------- |
+| `createEffect(() => ...)`         | `createEffect(() => ...)` (unchanged)         |
+| `createEffect(on(fn, () => ...))` | `createEffect(on(fn, () => ...))` (unchanged) |
+| `createComputed(...)`             | `createReaction(...)`                         |
+| `createRenderEffect`              | **deprecated** — use `createEffect`           |
+
+**createMemo is lazy by default:** the function body does not run until the memo is read.
+
+### Components & props (type-level)
+
+| 1.x               | 2.0                                                  |
+| ----------------- | ---------------------------------------------------- |
+| `Component<P>`    | `Component<P>` (unchanged)                           |
+| Optional children | `ParentComponent<P>` (requires `children?: Element`) |
+| Required children | `FlowComponent<P, C>` (requires `children: C`)       |
+| No children       | `VoidComponent<P>` (forbids `children`)              |
+
+### Control flow
+
+| 1.x            | 2.0       |
+| -------------- | --------- |
+| `Suspense`     | `Loading` |
+| `SuspenseList` | `Reveal`  |
+
+`<Loading>` takes `fallback?: SolidElement` and an optional `on` prop for
+scoping. `<Reveal>` takes `order: "sequential" | "together" | "natural"` and
+an optional `collapsed` prop.
+
+### Context
+
+| 1.x                         | 2.0                                                             |
+| --------------------------- | --------------------------------------------------------------- |
+| `createContext<T>()`        | `createContext<T>()` (unchanged)                                |
+| `createContext<T>(default)` | `createContext<T>(defaultValue)` (only for primitive fallbacks) |
+
+For reactive state, **use default-less `createContext<T>()`** — the Provider is
+mandatory by construction, and `useContext` throws `ContextNotFoundError` if missing.
+
+### Common pitfalls (from the 2.0 type definitions)
+
+1. **Don't read store properties outside a reactive context** (memo/effect/JSX).
+   Outside a tracking scope, reads return the current value without subscribing.
+2. **Don't mutate stores directly in views** — the ESLint rule `solid/no-store-mutation-outside-setter` will flag this.
+3. **Don't pass accessors as props** — the `solid/no-accessor-as-prop` rule warns against this
+   (use `<MyComponent value={someSignal()} />` not `<MyComponent value={someSignal} />`).
+4. **Effects are leaf nodes** — they run at the boundaries of the reactive graph.
+   Don't create reactive values inside effects that other effects depend on.
+5. **flush() cannot be called inside onSettled** — defer with `queueMicrotask(() => flush())`.
+6. **onCleanup inside onSettled is a dev-mode error** — use a returned cleanup function instead.
 
 ## Code style
 
