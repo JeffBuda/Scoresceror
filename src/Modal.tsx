@@ -1,7 +1,8 @@
 // Modal.tsx
-import React from 'react';
+import { createMemo, Show, type Component } from 'solid-js';
 import './Modal.css';
 import { calculateElapsedTime } from './timeUtils';
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -9,24 +10,26 @@ interface ModalProps {
   points: number;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, elapsedTimeMs, points }) => {
-  if (!isOpen) return null;
-  const elapsedTime = calculateElapsedTime(elapsedTimeMs);
+const Modal: Component<ModalProps> = (props) => {
+  const elapsedTime = createMemo(() => calculateElapsedTime(props.elapsedTimeMs));
+
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <h2>Welcome Back!</h2>
-        <p>You were away for:</p>
-        {elapsedTime.months > 0 && <p> {elapsedTime.months} months</p>}
-        {elapsedTime.weeks > 0 && <p> {elapsedTime.weeks} weeks</p>}
-        {elapsedTime.days > 0 && <p> {elapsedTime.days} days</p>}
-        {elapsedTime.hours > 0 && <p> {elapsedTime.hours} hours</p>}
-        {elapsedTime.minutes > 0 && <p> {elapsedTime.minutes} minutes</p>}
-        {elapsedTime.seconds > 0 && <p> {elapsedTime.seconds} seconds</p>}
-        <p>Points earned: {points}</p>
-        <button onClick={onClose}>Close</button>
+    <Show when={props.isOpen}>
+      <div class="modal-overlay">
+        <div class="modal">
+          <h2>Welcome Back!</h2>
+          <p>You were away for:</p>
+          {elapsedTime().months > 0 && <p> {elapsedTime().months} months</p>}
+          {elapsedTime().weeks > 0 && <p> {elapsedTime().weeks} weeks</p>}
+          {elapsedTime().days > 0 && <p> {elapsedTime().days} days</p>}
+          {elapsedTime().hours > 0 && <p> {elapsedTime().hours} hours</p>}
+          {elapsedTime().minutes > 0 && <p> {elapsedTime().minutes} minutes</p>}
+          {elapsedTime().seconds > 0 && <p> {elapsedTime().seconds} seconds</p>}
+          <p>Points earned: {props.points}</p>
+          <button onClick={() => props.onClose()}>Close</button>
+        </div>
       </div>
-    </div>
+    </Show>
   );
 };
 

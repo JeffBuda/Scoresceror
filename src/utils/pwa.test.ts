@@ -38,8 +38,7 @@ describe('pwa utilities', () => {
 
     it('should return true for iPadOS Mac user agent with touch points', () => {
       vi.stubGlobal('navigator', {
-        userAgent:
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15',
         maxTouchPoints: 5,
       });
       expect(isIOSDevice()).toBe(true);
@@ -47,8 +46,7 @@ describe('pwa utilities', () => {
 
     it('should return false for desktop Mac user agent (no touch)', () => {
       vi.stubGlobal('navigator', {
-        userAgent:
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15',
         maxTouchPoints: 1,
       });
       expect(isIOSDevice()).toBe(false);
@@ -56,8 +54,7 @@ describe('pwa utilities', () => {
 
     it('should return false for Windows user agent', () => {
       vi.stubGlobal('navigator', {
-        userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         maxTouchPoints: 0,
       });
       expect(isIOSDevice()).toBe(false);
@@ -166,8 +163,7 @@ describe('pwa utilities', () => {
 
     it('should return false for non-iOS device', () => {
       vi.stubGlobal('navigator', {
-        userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         maxTouchPoints: 0,
       });
       vi.stubGlobal('window', {

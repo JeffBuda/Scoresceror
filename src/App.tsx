@@ -1,68 +1,30 @@
-import React, { useReducer, useEffect, useRef } from 'react';
+import type { JSX } from '@solidjs/web';
 import './App.css';
 import Modal from './Modal';
 import InstallPrompt from './components/InstallPrompt';
-import { restoreState, reducer, State, LocalStorageKeys } from './reducer';
+import { useGameState } from './hooks/useGameState';
 import './components/InstallPrompt.css';
-   
-const App: React.FC = () => {
-  const initialState: State = restoreState();
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const intervalRef = useRef<NodeJS.Timeout>();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentTime = Date.now();
-      dispatch({ type: 'updateTime', payload: { nowMs: currentTime } });
-    }, 1000);
-
-    intervalRef.current = interval;
-
-    return () => {
-      clearInterval(intervalRef.current);
-    };
-  }, []);
-
-  useEffect(
-    () => {
-      dispatch({ type: 'calculateIdlePoints', payload: { nowMs: Date.now() } });
-    },
-    []);
-
-  useEffect(() => {
-    if (state.idlePoints && !state.isModalOpen) {
-      dispatch({ type: 'openModal' });
-    }
-  },
-  [state.idlePoints, state.isModalOpen]);
-
-  // store state in local storage
-  useEffect(
-    () => {
-      localStorage.setItem(LocalStorageKeys.score, state.score.toString());
-      localStorage.setItem(LocalStorageKeys.updateTimeMs, state.updateTimeMs.toString());
-    },
-    [state.score, state.updateTimeMs]);
-
-  const handleIncrement = () => {
-    dispatch({ type: 'increment' });
-  };
-
-  const handleCloseModal = () => {
-    dispatch({ type: 'closeModal' });
-    dispatch({ type: 'awardIdlePoints', payload: { nowMs: Date.now() } });
-  };
+/**
+ * App is a pure view component: it owns no orchestration of its own.
+ * All game-state wiring lives in `useGameState` so that this file is
+ * concerned only with *rendering* the current state and forwarding user
+ * events to the handlers the hook provides (Single Responsibility).
+ */
+const App = (): JSX.Element => {
+  const { state, idleSeconds, handleIncrement, handleCloseModal } = useGameState();
 
   return (
-    <div className="container">
+    <div class="container">
       <InstallPrompt />
       <h1>🧙‍♂️ Scoresceror 🧙‍♀️</h1>
       <p>Press the button to increase your score!</p>
       <p>✨ Score: {state.score.toLocaleString()} ✨</p>
       <button onClick={handleIncrement}>🪄 Increase score! 🪄</button>
+      <p>🧊 Idle for: {idleSeconds()} seconds</p>
       <Modal
         isOpen={state.isModalOpen}
-        elapsedTimeMs={Math.floor((state.idleTimeMs || 0))}
+        elapsedTimeMs={state.idleTimeMs || 0}
         points={state.idlePoints || 0}
         onClose={handleCloseModal}
       />
