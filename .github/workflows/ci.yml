@@ -39,7 +39,7 @@ jobs:
       - lint-typecheck
       - test
     runs-on: windows-latest
-    if: github.event_name == "push" && github.ref == "refs/heads/main"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
