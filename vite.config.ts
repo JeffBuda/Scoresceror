@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import solid from '@solidjs/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
   base: '/Scoresceror/', // This should match the repository name
   plugins: [
-    react(),
+    solid(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {

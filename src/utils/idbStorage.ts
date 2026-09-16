@@ -92,4 +92,3 @@ export async function clearTimestamp(): Promise<void> {
 
   localStorage.removeItem(LS_FALLBACK_KEY);
 }
-
