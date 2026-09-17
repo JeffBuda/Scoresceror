@@ -1,6 +1,7 @@
 import { render } from '@solidjs/web';
 import './index.css';
 import App from './App.tsx';
+import DebugView from './DebugView.tsx';
 import { requestPersistentStorage } from './utils/pwa.ts';
 
 // Request persistent storage so that localStorage game state is
@@ -11,4 +12,8 @@ requestPersistentStorage().then((persistent) => {
   }
 });
 
-render(() => <App />, document.getElementById('root')!);
+// Route: /debug renders the diagnostic page; everything else renders the game.
+const root = document.getElementById('root')!;
+const isDebugRoute = window.location.pathname.includes('/debug');
+
+render(() => (isDebugRoute ? <DebugView /> : <App />), root);
