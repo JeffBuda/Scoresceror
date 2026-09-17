@@ -1,6 +1,7 @@
 import type { JSX } from '@solidjs/web';
 import './DebugView.css';
-import { VERSION_STRING, BUILD_TIMESTAMP, COMMIT_SHA } from './version';
+import { VERSION_STRING, COMMIT_SHA } from './version';
+import { useFormattedBuildDate } from './hooks/useFormattedDate';
 
 /**
  * DebugView — a diagnostic page at /debug that shows build/version metadata.
@@ -18,7 +19,7 @@ const DebugView = (): JSX.Element => {
           <strong>Version:</strong> {VERSION_STRING}
         </p>
         <p>
-          <strong>Build Date:</strong> {BUILD_TIMESTAMP}
+          <strong>Build Date:</strong> {useFormattedBuildDate()}
         </p>
         <p>
           <strong>Commit:</strong> {COMMIT_SHA}
