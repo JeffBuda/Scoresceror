@@ -54,7 +54,7 @@ jobs:
       - run: npm run build
         env:
           VITE_DEPLOY_VERSION: ${{ github.run_number }}
-          VITE_BUILD_TIMESTAMP: ${{ github.run_started_at }}
+          VITE_BUILD_TIMESTAMP: '${{ github.run_started_at }}'
           VITE_COMMIT_SHA: ${{ github.sha }}
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
