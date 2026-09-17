@@ -39,7 +39,9 @@ jobs:
       - lint-typecheck
       - test
     runs-on: windows-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -48,6 +50,10 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_DEPLOY_VERSION: ${{ github.run_number }}
+          VITE_BUILD_TIMESTAMP: ${{ github.run_started_at }}
+          VITE_COMMIT_SHA: ${{ github.sha }}
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

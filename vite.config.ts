@@ -1,11 +1,24 @@
 import { defineConfig } from 'vite';
 import solid from '@solidjs/vite-plugin';
 import { VitePWA } from 'vite-plugin-pwa';
+import { copyFileSync } from 'fs';
+import { resolve } from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
   base: '/Scoresceror/', // This should match the repository name
   plugins: [
+    // SPA fallback: copy index.html to 404.html so GitHub Pages serves
+    // the app for client-side routes like /debug.
+    {
+      name: 'spa-404-fallback',
+      closeBundle() {
+        copyFileSync(
+          resolve(process.cwd(), 'dist', 'index.html'),
+          resolve(process.cwd(), 'dist', '404.html'),
+        );
+      },
+    },
     solid(),
     VitePWA({
       registerType: 'autoUpdate',
