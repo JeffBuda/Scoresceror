@@ -51,10 +51,16 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+      - name: Set build timestamp via $GITHUB_ENV
+        # Using $GITHUB_ENV with shell interpolation avoids the issue where
+        # GitHub Actions YAML expression evaluator coerces ISO-8601 datetime
+        # values (like github.run_started_at) to empty strings when used in
+        # the env: block. Shell echo writes the interpolated string directly.
+        run: echo "VITE_BUILD_TIMESTAMP=${{ github.run_started_at }}" >> $GITHUB_ENV
+        shell: bash
       - run: npm run build
         env:
           VITE_DEPLOY_VERSION: ${{ github.run_number }}
-          VITE_BUILD_TIMESTAMP: '${{ github.run_started_at }}'
           VITE_COMMIT_SHA: ${{ github.sha }}
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
