@@ -41,7 +41,9 @@ jobs:
     runs-on: windows-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,7 +56,11 @@ jobs:
           VITE_DEPLOY_VERSION: ${{ github.run_number }}
           VITE_BUILD_TIMESTAMP: ${{ github.run_started_at }}
           VITE_COMMIT_SHA: ${{ github.sha }}
-      - uses: peaceiris/actions-gh-pages@v4
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          path: ./dist
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
